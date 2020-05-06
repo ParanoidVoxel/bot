@@ -1,0 +1,11 @@
+[Unit]
+Description=RadonBot Discord Bot
+
+[Service]
+Type=simple
+User=ubuntu
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/ubuntu/radonbot/main.py
+
+[Install]
+WantedBy=default.target
