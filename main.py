@@ -14,6 +14,17 @@ db_client = motor.motor_tornado.MotorClient(utils.config.MONGO)
 
 voice_state = {}
 
+filters = {
+            "volume": {
+                "string": "volume={}",
+                "type": "string"
+                },
+            "reverse": {
+                "string": "areverse",
+                "type": "bool"
+                },
+        }
+
 class Voice:
     @classmethod
     async def create(cls, guild, channel, client):
@@ -43,10 +54,25 @@ class Voice:
         except:
             pass
 
-    async def create_audio_source(self, metadata, _type="audio", params=False):
+    async def parse_params(self, params):
+        filter_list = []
+        for param in params.items():
+            if(param[0] in filters):
+                if(filters[param[0]]["type"] == "bool"):
+                    filter_list.append(filters[param[0]]["string"])
+                else:
+                    filter_list.append(filters[param[0]]["string"].format(param[1]))
+        filter_string = ",".join(filter_list)
+        return filter_string
+
+    async def create_audio_source(self, metadata, _type="audio", params=None):
+        if(params is not None):
+            param_string = await self.parse_params(params)
+            print(param_string)
         if(_type == "audio"):
-            if(self.limiter):
-                audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter:a 'volume={str(metadata['settings']['volume'])},{self.limiter_string}'")
+            if(params is not None):
+                print("LOLOL")
+                audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter_complex '{param_string}'")
             else:
                 audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{audio['metadata']['_id']}.mp3", options=f"-filter:a 'volume={str(audio['metadata']['settings']['volume'])}'")
         else:
@@ -65,7 +91,7 @@ class Voice:
             audio_source = await self.create_audio_source(audio["metadata"])
             self.voice_client.play(audio_source, after=self._after)
 
-    async def play_now(self, metadata, extra_params=False):
+    async def play_now(self, metadata, extra_params=None):
         self.queues["sound"] = asyncio.Queue()
         self.queues["yt"] = asyncio.Queue()
         audio_source = await self.create_audio_source(metadata, params=extra_params)
@@ -144,30 +170,36 @@ async def addfile(message):
         await message.channel.send(f"{utils.config.ERROR_PREFIX}Please specify a name for the clip. `{utils.config.COMMAND_PREFIX}addfile <name>`.")
 
 
-async def play_sound(metadata, channel, mode="instant"):
+async def play_sound(metadata, channel, mode="instant", extra_params=None):
     voice_client = await connect_voice(str(channel.guild.id), channel)
     #audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter:a 'volume={str(metadata['settings']['volume'])}'")
     if(mode == "queue"):
         await voice_client.queue(metadata, "sound")
     else:
-        await voice_client.play_now(metadata)
+        await voice_client.play_now(metadata, extra_params=extra_params)
 
 async def get_sound(message):
-    sound_metadata = await clips_db[str(message.guild.id)].find_one({"name": {"$eq": message.content[1:]}})
+    params = None
+    command_name = message.content[1:]
     if("[" in message.content and "]" in message.content):
+        params = {}
         try:
-            param_strings = message.content.split("[")[0].strip("]").split(",")
-            params = {}
+            param_strings = message.content.split("[")[1].strip("]").split(",")
             for param in param_strings:
                 params[param.split("=")[0]] = param.split("=")[1]
-            await message.channel.send("Got these parameters: " + str(params))
+            command_name = message.content[1:message.content.index("[")]
         except Exception:
-            pass
+            raise
+    
+    sound_metadata = await clips_db[str(message.guild.id)].find_one({"name": {"$eq": command_name}})
 
     if(sound_metadata is None or message.author.voice.channel is None):
         return
     else:
-        await play_sound(sound_metadata, message.author.voice.channel)
+        if(params is not None):
+            await play_sound(sound_metadata, message.author.voice.channel, extra_params=params)
+        else:
+            await play_sound(sound_metadata, message.author.voice.channel)
         await clips_db[str(message.guild.id)].update_one({"_id": sound_metadata["_id"]}, {"$inc": {'stats.count':1}})
 
 async def is_valid_volume(string):
