@@ -154,6 +154,16 @@ async def play_sound(metadata, channel, mode="instant"):
 
 async def get_sound(message):
     sound_metadata = await clips_db[str(message.guild.id)].find_one({"name": {"$eq": message.content[1:]}})
+    if("[" in message.content and "]" in message.content):
+        try:
+            param_strings = message.content.split("[")[0].strip("]").split(",")
+            params = {}
+            for param in param_strings:
+                params[param.split("=")[0]] = param.split("=")[1]
+            await message.channel.send("Got these parameters: " + str(params))
+        except Exception:
+            pass
+
     if(sound_metadata is None or message.author.voice.channel is None):
         return
     else:
@@ -255,7 +265,7 @@ async def on_ready():
 @discord_client.event
 async def on_message(message):
     if(message.author == discord_client.user):
-        return    
+        return
     elif(message.content == f"{utils.config.SOUND_PREFIX}r"):
         await play_random(message)
     elif(message.content.startswith(utils.config.SOUND_PREFIX*2)):
