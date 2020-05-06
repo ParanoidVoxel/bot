@@ -43,7 +43,7 @@ class Voice:
         except:
             pass
 
-    async def create_audio_source(self, metadata, _type="audio"):
+    async def create_audio_source(self, metadata, _type="audio", params=False):
         if(_type == "audio"):
             if(self.limiter):
                 audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter:a 'volume={str(metadata['settings']['volume'])},{self.limiter_string}'")
@@ -65,10 +65,10 @@ class Voice:
             audio_source = await self.create_audio_source(audio["metadata"])
             self.voice_client.play(audio_source, after=self._after)
 
-    async def play_now(self, metadata):
+    async def play_now(self, metadata, extra_params=False):
         self.queues["sound"] = asyncio.Queue()
         self.queues["yt"] = asyncio.Queue()
-        audio_source = await self.create_audio_source(metadata)
+        audio_source = await self.create_audio_source(metadata, params=extra_params)
         if(await self.is_playing()):
             self.voice_client.stop()
         self.voice_client.play(audio_source)
