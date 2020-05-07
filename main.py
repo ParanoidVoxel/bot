@@ -23,6 +23,10 @@ filters = {
                 "string": "areverse",
                 "type": "bool"
                 },
+            "vibrato": {
+                "string": "vibrato=d=1:f={}",
+                "type": "string"
+                }
         }
 
 class Voice:
@@ -42,6 +46,7 @@ class Voice:
 
     async def connect(self):
         self.voice_client = await self.channel.connect()
+        return self.voice_client
 
     async def is_playing(self):
         return self.voice_client.is_playing()
@@ -62,6 +67,7 @@ class Voice:
                     filter_list.append(filters[param[0]]["string"])
                 else:
                     filter_list.append(filters[param[0]]["string"].format(param[1]))
+        print(filter_list)
         filter_string = ",".join(filter_list)
         return filter_string
 
@@ -71,10 +77,9 @@ class Voice:
             print(param_string)
         if(_type == "audio"):
             if(params is not None):
-                print("LOLOL")
                 audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter_complex '{param_string}'")
             else:
-                audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{audio['metadata']['_id']}.mp3", options=f"-filter:a 'volume={str(audio['metadata']['settings']['volume'])}'")
+                audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter:a 'volume={str(metadata['settings']['volume'])}'")
         else:
             audio_source = discord.FFmpegPCMAudio(metadata)
         return audio_source
