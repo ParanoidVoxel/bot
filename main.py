@@ -14,20 +14,32 @@ db_client = motor.motor_tornado.MotorClient(utils.config.MONGO)
 
 voice_state = {}
 
-filters = {
-            "volume": {
-                "string": "volume={}",
-                "type": "string"
-                },
-            "reverse": {
-                "string": "areverse",
-                "type": "bool"
-                },
-            "vibrato": {
-                "string": "vibrato=d=1:f={}",
-                "type": "string"
-                }
-        }
+supported_filters = {
+    "tremolo": {
+        "string": "tremolo=d={depth}:f={frequency}",   
+        "default_values": {
+            "depth": "0.5",
+            "frequency": "5"
+        },
+        "type": "multiple"
+    },
+    "vibrato": {
+        "string": "tremolo=d={depth}:f={frequency}",
+        "default_values": {
+            "depth": "0.5",
+            "frequency": "5"
+        },
+        "type": "multiple"
+    },
+    "volume": {
+        "string": "volume={}",
+        "type": "single"
+    },
+    "reverse": {
+        "string": "areverse",
+        "type": "boolean"
+    }
+}
 
 class Voice:
     @classmethod
@@ -36,8 +48,6 @@ class Voice:
         self.guild = guild
         self.channel = channel
         self.queues = {"sound": asyncio.Queue(), "yt": asyncio.Queue()}
-        self.limiter = True
-        self.limiter_string = "alimiter=level_out=0.4:limit=0.5"
         self.client = client
         return self
         
@@ -59,17 +69,28 @@ class Voice:
         except:
             pass
 
-    async def parse_params(self, params):
-        filter_list = []
-        for param in params.items():
-            if(param[0] in filters):
-                if(filters[param[0]]["type"] == "bool"):
-                    filter_list.append(filters[param[0]]["string"])
+    async def parse_params(self, filter_list):
+        filter_string_list = []
+        for f in filter_list:
+            f = f.strip(")")
+            name = f.split("(")[0]
+            if(name in supported_filters):
+                params = f.split("(")[1].split(",")
+                if(params[0] == ""): # Possibly boolean
+                    if(supported_filters[name]["type"] == "boolean"):
+                        filter_string_list.append(supported_filters[name]["string"])
                 else:
-                    filter_list.append(filters[param[0]]["string"].format(param[1]))
-        print(filter_list)
-        filter_string = ",".join(filter_list)
-        return filter_string
+                    if(len(params) > 1): # There are named parameters
+                        param_dict = supported_filters[name]["default_values"]
+                        for p in params:
+                            if("=" in p): # If there are multiple parameters specified
+                                if(p.split("=")[0] in param_dict): # If these parameters are valid for the filter
+                                    param_dict[p.split("=")[0]] = p.split("=")[1] # change them in the dictionary
+                        filter_string_list.append(supported_filters[name]["string"].format(**param_dict))
+                    elif(len(params) > 0):
+                        filter_string_list.append(supported_filters[name]["string"].format(params[0]))
+        string = ",".join(filter_string_list)
+        return string
 
     async def create_audio_source(self, metadata, _type="audio", params=None):
         if(params is not None):
@@ -187,12 +208,9 @@ async def get_sound(message):
     params = None
     command_name = message.content[1:]
     if("[" in message.content and "]" in message.content):
-        params = {}
+        params = None
         try:
-            param_strings = message.content.split("[")[1].strip("]").split(",")
-            for param in param_strings:
-                params[param.split("=")[0]] = param.split("=")[1]
-            command_name = message.content[1:message.content.index("[")]
+            params = message.content[string.index("[")+1:string.index("]")].split("),")
         except Exception:
             raise
     
