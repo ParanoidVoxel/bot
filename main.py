@@ -80,7 +80,7 @@ class Voice:
                     if(supported_filters[name]["type"] == "boolean"):
                         filter_string_list.append(supported_filters[name]["string"])
                 else:
-                    if(len(params) > 1): # There are named parameters
+                    if("=" in params): # There are named parameters
                         param_dict = supported_filters[name]["default_values"]
                         for p in params:
                             if("=" in p): # If there are multiple parameters specified
@@ -208,7 +208,7 @@ async def get_sound(message):
     params = None
     command_name = message.content[1:]
     if("[" in message.content and "]" in message.content):
-        command_name = message.content[1:message.content.index("[")-1]
+        command_name = message.content[1:message.content.index("[")]
         params = None
         try:
             params = message.content[message.content.index("[")+1:message.content.index("]")].split("),")
