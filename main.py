@@ -84,9 +84,10 @@ class Voice:
                         for p in params:
                             if("=" in p): # If there are multiple parameters specified
                                 if(p.split("=")[0] in param_dict): # If these parameters are valid for the filter
-                                    param_dict[p.split("=")[0]] = p.split("=")[1] # change them in the dictionary
+                                    param_dict[p.split("=")[0]] = p.split("=")[1].strip(")") # change them in the dictionary
                         filter_string_list.append(supported_filters[name]["string"].format(**param_dict))
                     elif(len(params) > 0):
+                        params[0] = params[0].strip(")")
                         filter_string_list.append(supported_filters[name]["string"].format(params[0]))
         string = ",".join(filter_string_list)
         print("FFMPEG-FILTER-STRING: " + string)
