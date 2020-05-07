@@ -24,7 +24,7 @@ supported_filters = {
         "type": "multiple"
     },
     "vibrato": {
-        "string": "tremolo=d={depth}:f={frequency}",
+        "string": "vibrato=d={depth}:f={frequency}",
         "default_values": {
             "depth": "0.5",
             "frequency": "5"
