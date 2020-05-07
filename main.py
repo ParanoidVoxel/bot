@@ -210,7 +210,7 @@ async def get_sound(message):
     if("[" in message.content and "]" in message.content):
         params = None
         try:
-            params = message.content[string.index("[")+1:string.index("]")].split("),")
+            params = message.content[message.content.index("[")+1:message.content.index("]")].split("),")
         except Exception:
             raise
     
