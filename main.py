@@ -71,7 +71,7 @@ class Voice:
 
     async def parse_params(self, filter_list):
         filter_string_list = []
-        for f in filter_list.replace(" ", ""): #ignorera mellanslag
+        for f in filter_list: #ignorera mellanslag
             f = f.strip(")")
             name = f.split("(")[0]
             if(name in supported_filters):
@@ -209,7 +209,7 @@ async def get_sound(message):
         command_name = message.content[1:message.content.index("[")]
         params = None
         try:
-            params = message.content[message.content.index("[")+1:message.content.index("]")].split("),")
+            params = message.content.replace(" ", "")[message.content.index("[")+1:message.content.index("]")].split("),")
         except Exception:
             raise
     
