@@ -89,6 +89,7 @@ class Voice:
                     elif(len(params) > 0):
                         filter_string_list.append(supported_filters[name]["string"].format(params[0]))
         string = ",".join(filter_string_list)
+        print("FFMPEG-FILTER-STRING: " + string)
         return string
 
     async def create_audio_source(self, metadata, _type="audio", params=None):
