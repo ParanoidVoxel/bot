@@ -71,7 +71,7 @@ class Voice:
 
     async def parse_params(self, filter_list):
         filter_string_list = []
-        for f in filter_list:
+        for f in filter_list.replace(" ", ""): #ignorera mellanslag
             f = f.strip(")")
             name = f.split("(")[0]
             if(name in supported_filters):
@@ -89,13 +89,11 @@ class Voice:
                     elif(len(params) > 0):
                         filter_string_list.append(supported_filters[name]["string"].format(params[0]))
         string = ",".join(filter_string_list)
-        print(string)
         return string
 
     async def create_audio_source(self, metadata, _type="audio", params=None):
         if(params is not None):
             param_string = await self.parse_params(params)
-            print(param_string)
         if(_type == "audio"):
             if(params is not None):
                 audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter_complex '{param_string}'")
