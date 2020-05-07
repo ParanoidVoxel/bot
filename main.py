@@ -80,9 +80,7 @@ class Voice:
                     if(supported_filters[name]["type"] == "boolean"):
                         filter_string_list.append(supported_filters[name]["string"])
                 else:
-                    print(params)
-                    if("=" in params): # There are named parameters
-                        print("MADE IT")
+                    if("=" in f): # There are named parameters
                         param_dict = supported_filters[name]["default_values"]
                         for p in params:
                             if("=" in p): # If there are multiple parameters specified
@@ -90,7 +88,6 @@ class Voice:
                                     param_dict[p.split("=")[0]] = p.split("=")[1] # change them in the dictionary
                         filter_string_list.append(supported_filters[name]["string"].format(**param_dict))
                     elif(len(params) > 0):
-                        print("FUCK OFF")
                         filter_string_list.append(supported_filters[name]["string"].format(params[0]))
         string = ",".join(filter_string_list)
         return string
