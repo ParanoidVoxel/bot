@@ -76,9 +76,8 @@ class Voice:
             name = f.split("(")[0]
             if(name in supported_filters):
                 params = f.split("(")[1].split(",")
-                if(params[0] == ""): # Possibly boolean
-                    if(supported_filters[name]["type"] == "boolean"):
-                        filter_string_list.append(supported_filters[name]["string"])
+                if(supported_filters[name]["type"] == "boolean"):
+                    filter_string_list.append(supported_filters[name]["string"])
                 else:
                     if("=" in f): # There are named parameters
                         param_dict = supported_filters[name]["default_values"]
@@ -90,6 +89,7 @@ class Voice:
                     elif(len(params) > 0):
                         filter_string_list.append(supported_filters[name]["string"].format(params[0]))
         string = ",".join(filter_string_list)
+        print(string)
         return string
 
     async def create_audio_source(self, metadata, _type="audio", params=None):
