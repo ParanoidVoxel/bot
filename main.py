@@ -211,7 +211,7 @@ async def get_sound(message):
         command_name = message.content[1:message.content.index("[")]
         params = None
         try:
-            params = message.content.replace(" ", "")[message.content.index("[")+1:message.content.index("]")-1].split("),")
+            params = message.content.replace(" ", "")[message.content.index("[")+1:message.content.index("]")].strip(")]").split("),")
         except Exception:
             raise
     
