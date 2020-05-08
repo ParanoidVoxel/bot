@@ -50,6 +50,10 @@ supported_filters = {
             "slope": "0.5",
             "delay": "20"
         }
+    },
+    "pad": {
+        "string": "apad=pad_dur={}",
+        "type": "single"
     }
 }
 
