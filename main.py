@@ -161,6 +161,7 @@ class Voice:
 
 
     async def queue(self, metadata, _type, extra_params=None):
+        print(extra_params)
         await self.queues[_type].put({"metadata": metadata, "params": extra_params})
         if(_type == "sound"):
             if not(await self.is_playing()):
@@ -323,8 +324,8 @@ async def youtube(message):
     
 async def parse_command_queue(message):
     commands = message.content.split(utils.config.SOUND_PREFIX)[2:]
+    params = None
     for command in commands:
-        params = None
         if("[" in command and "]" in command):
             try:
                 params = command.replace(" ", "")[command.index("[")+1:command.index("]")].strip(")]").split("),")
