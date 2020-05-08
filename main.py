@@ -49,6 +49,7 @@ supported_filters = {
             "decay": "0.7",
             "cutoff": "100",
             "slope": "0.5",
+            "feedback": "0.5",
             "delay": "20"
         }
     },
