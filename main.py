@@ -104,6 +104,7 @@ class Voice:
             pass
 
     async def parse_params(self, filter_list):
+        print(filter_list)
         filter_string_list = []
         for f in filter_list: #ignorera mellanslag
             f = f.strip(")")
