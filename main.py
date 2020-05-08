@@ -351,15 +351,15 @@ commands = {
 async def parse_message(message):
     if(message.author == discord_client.user):
             return
-        elif(message.content == f"{utils.config.SOUND_PREFIX}r"):
-            await play_random(message)
-        elif(message.content.startswith(utils.config.SOUND_PREFIX*2)):
-            await parse_command_queue(message)
-        elif(message.content.startswith(utils.config.SOUND_PREFIX)):
-            await get_sound(message)
-        elif(message.content.startswith(utils.config.COMMAND_PREFIX)):
-            if(message.content[1:].split()[0] in commands):
-                await commands[message.content[1:].split()[0]](message)
+    elif(message.content == f"{utils.config.SOUND_PREFIX}r"):
+        await play_random(message)
+    elif(message.content.startswith(utils.config.SOUND_PREFIX*2)):
+        await parse_command_queue(message)
+    elif(message.content.startswith(utils.config.SOUND_PREFIX)):
+        await get_sound(message)
+    elif(message.content.startswith(utils.config.COMMAND_PREFIX)):
+        if(message.content[1:].split()[0] in commands):
+            await commands[message.content[1:].split()[0]](message)
 
 @discord_client.event
 async def on_ready():
