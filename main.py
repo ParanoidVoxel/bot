@@ -68,7 +68,8 @@ supported_filters = {
         "default_values": {
             "tempo": 1,
             "pitch": 1
-        }
+        },
+        "type": "multiple"
     } 
 }
 
