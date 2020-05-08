@@ -38,6 +38,18 @@ supported_filters = {
     "reverse": {
         "string": "areverse",
         "type": "boolean"
+    },
+    "subboost": {
+        "string": "asubboost=dry={dry}:wet={wet}:decay={decay}:feedback={feedback}:cutoff={cutoff}:slope={slope}:delay={delay}",
+        "type": "multiple",
+        "default_values": {
+            "dry": "0.5",
+            "wet": "0.8",
+            "decay": "0.7",
+            "cutoff": "100",
+            "slope": "0.5",
+            "delay": "20"
+        }
     }
 }
 
