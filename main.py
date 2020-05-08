@@ -285,10 +285,16 @@ async def setvolume(message):
         await message.channel.send(f"{utils.config.ERROR_PREFIX}Please provide two arguments. `{utils.config.COMMAND_PREFIX}addfile <clip name> <volume>`.")
 
 async def play_random(message):
+    params = None
+    if("[" in message.content and "]" in message.content):
+            try:
+                params = message.content.replace(" ", "")[message.content.index("[")+1:message.content.index("]")].strip(")]").split("),")
+            except Exception:
+                raise
     if(message.author.voice.channel is None):
         return
     async for doc in clips_db[str(message.guild.id)].aggregate([{"$sample": {"size": 1}}]):
-        await play_sound(doc, message.author.voice.channel)
+        await play_sound(doc, message.author.voice.channel, extra_params=params)
 
 
 async def _list(message):
