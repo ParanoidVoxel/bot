@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import datetime
 import discord
 import logging
@@ -112,7 +113,7 @@ class Voice:
                     filter_string_list.append(supported_filters[name]["string"])
                 else:
                     if("=" in f): # There are named parameters
-                        param_dict = supported_filters[name]["default_values"]
+                        param_dict = copy.deepcopy(supported_filters[name]["default_values"])
                         for p in params:
                             if("=" in p): # If there are multiple parameters specified
                                 if(p.split("=")[0] in param_dict): # If these parameters are valid for the filter
