@@ -325,7 +325,7 @@ async def parse_command_queue(message):
     commands = message.content.split(utils.config.SOUND_PREFIX)[2:]
     for command in commands:
         params = None
-        if("[" in message.content and "]" in command):
+        if("[" in command and "]" in command):
             try:
                 params = command.replace(" ", "")[command.index("[")+1:command.index("]")].strip(")]").split("),")
             except Exception:
