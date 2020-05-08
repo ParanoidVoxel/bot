@@ -348,22 +348,31 @@ commands = {
     "skip": skip,
 }
 
+async def parse_message(message):
+    if(message.author == discord_client.user):
+            return
+        elif(message.content == f"{utils.config.SOUND_PREFIX}r"):
+            await play_random(message)
+        elif(message.content.startswith(utils.config.SOUND_PREFIX*2)):
+            await parse_command_queue(message)
+        elif(message.content.startswith(utils.config.SOUND_PREFIX)):
+            await get_sound(message)
+        elif(message.content.startswith(utils.config.COMMAND_PREFIX)):
+            if(message.content[1:].split()[0] in commands):
+                await commands[message.content[1:].split()[0]](message)
+
 @discord_client.event
 async def on_ready():
     print(f"Bot started as user: {discord_client.user}")
 
+
 @discord_client.event
 async def on_message(message):
-    if(message.author == discord_client.user):
-        return
-    elif(message.content == f"{utils.config.SOUND_PREFIX}r"):
-        await play_random(message)
-    elif(message.content.startswith(utils.config.SOUND_PREFIX*2)):
-        await parse_command_queue(message)
-    elif(message.content.startswith(utils.config.SOUND_PREFIX)):
-        await get_sound(message)
-    elif(message.content.startswith(utils.config.COMMAND_PREFIX)):
-        if(message.content[1:].split()[0] in commands):
-            await commands[message.content[1:].split()[0]](message)
+    await parse_message(message)
+
+@discord_client.event
+async def on_message_edit(before, after):
+    await parse_message(after)
+
 
 discord_client.run(utils.config.API_KEY)
