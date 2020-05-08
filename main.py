@@ -329,6 +329,7 @@ async def parse_command_queue(message):
         if("[" in command and "]" in command):
             try:
                 params = command.replace(" ", "")[command.index("[")+1:command.index("]")].strip(")]").split("),")
+                print("params")
             except Exception:
                 raise
         if(command == "r"):
