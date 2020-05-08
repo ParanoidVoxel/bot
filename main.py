@@ -148,7 +148,7 @@ class Voice:
     async def play_next_sound(self, error):
         if not(self.queues["sound"].empty()):
             audio = await self.queues["sound"].get()
-            audio_source = await self.create_audio_source(audio["metadata"])
+            audio_source = await self.create_audio_source(audio["metadata"], params=audio["params"])
             self.voice_client.play(audio_source, after=self._after)
 
     async def play_now(self, metadata, extra_params=None):
@@ -160,8 +160,8 @@ class Voice:
         self.voice_client.play(audio_source)
 
 
-    async def queue(self, metadata, _type):
-        await self.queues[_type].put({"metadata": metadata})
+    async def queue(self, metadata, _type, extra_params=None):
+        await self.queues[_type].put({"metadata": metadata, "params": extra_params})
         if(_type == "sound"):
             if not(await self.is_playing()):
                 await self.play_next_sound(None)
@@ -234,7 +234,7 @@ async def play_sound(metadata, channel, mode="instant", extra_params=None):
     voice_client = await connect_voice(str(channel.guild.id), channel)
     #audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter:a 'volume={str(metadata['settings']['volume'])}'")
     if(mode == "queue"):
-        await voice_client.queue(metadata, "sound")
+        await voice_client.queue(metadata, "sound", extra_params=extra_params)
     else:
         await voice_client.play_now(metadata, extra_params=extra_params)
 
@@ -324,6 +324,12 @@ async def youtube(message):
 async def parse_command_queue(message):
     commands = message.content.split(utils.config.SOUND_PREFIX)[2:]
     for command in commands:
+        params = None
+        if("[" in message.content and "]" in command):
+            try:
+                params = command.replace(" ", "")[command.index("[")+1:command.index("]")].strip(")]").split("),")
+            except Exception:
+                raise
         if(command == "r"):
             async for doc in clips_db[str(message.guild.id)].aggregate([{"$sample": {"size": 1}}]):
                 sound_metadata = doc
@@ -332,7 +338,7 @@ async def parse_command_queue(message):
         if(sound_metadata is None or message.author.voice.channel is None):
             pass
         else:
-            await play_sound(sound_metadata, message.author.voice.channel, "queue")
+            await play_sound(sound_metadata, message.author.voice.channel, "queue", extra_params=params)
             await clips_db[str(message.guild.id)].update_one({"_id": sound_metadata["_id"]}, {"$inc": {'stats.count':1}})
 
 async def skip(message):
