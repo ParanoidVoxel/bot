@@ -327,11 +327,10 @@ async def parse_command_queue(message):
     commands = message.content.split(utils.config.SOUND_PREFIX)[2:]
     params = None
     for command in commands:
-        print(command)
         if("[" in command and "]" in command):
             try:
                 params = command.replace(" ", "")[command.index("[")+1:command.index("]")].strip(")]").split("),")
-                print(params)
+                command = command.split("[")[0]
             except Exception:
                 raise
         if(command == "r"):
@@ -342,6 +341,7 @@ async def parse_command_queue(message):
         if(sound_metadata is None or message.author.voice.channel is None):
             pass
         else:
+            print(command)
             await play_sound(sound_metadata, message.author.voice.channel, "queue", extra_params=params)
             await clips_db[str(message.guild.id)].update_one({"_id": sound_metadata["_id"]}, {"$inc": {'stats.count':1}})
 
