@@ -54,6 +54,14 @@ supported_filters = {
     "pad": {
         "string": "apad=pad_dur={}",
         "type": "single"
+    },
+    "trim": {
+        "string": "atrim=start={start}:end={end}",
+        "default_values": {
+            "start": "2",
+            "end": "10",
+        },
+        "type": "multiple"
     }
 }
 
