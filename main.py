@@ -326,10 +326,11 @@ async def parse_command_queue(message):
     commands = message.content.split(utils.config.SOUND_PREFIX)[2:]
     params = None
     for command in commands:
+        print(command)
         if("[" in command and "]" in command):
             try:
                 params = command.replace(" ", "")[command.index("[")+1:command.index("]")].strip(")]").split("),")
-                print("params")
+                print(params)
             except Exception:
                 raise
         if(command == "r"):
