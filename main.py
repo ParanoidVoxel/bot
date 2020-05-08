@@ -62,7 +62,14 @@ supported_filters = {
             "end": "10",
         },
         "type": "multiple"
-    }
+    },
+    "pitchtempo": {
+        "string": "rubberband=tempo={tempo}:pitch={pitch}:pitchq=consistency",
+        "default_values": {
+            "tempo": 1,
+            "pitch": 1
+        }
+    } 
 }
 
 class Voice:
