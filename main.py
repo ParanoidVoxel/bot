@@ -7,6 +7,8 @@ import motor
 from youtube_dl import YoutubeDL
 import requests
 import time
+
+from utils.filters import FILTERS
 import utils.config
 
 logging.basicConfig(level=logging.INFO)
@@ -14,66 +16,6 @@ logging.basicConfig(level=logging.INFO)
 db_client = motor.motor_tornado.MotorClient(utils.config.MONGO)
 
 voice_state = {}
-
-supported_filters = {
-    "tremolo": {
-        "string": "tremolo=d={depth}:f={frequency}",
-        "default_values": {
-            "depth": "0.5",
-            "frequency": "5"
-        },
-        "type": "multiple"
-    },
-    "vibrato": {
-        "string": "vibrato=d={depth}:f={frequency}",
-        "default_values": {
-            "depth": "0.5",
-            "frequency": "5"
-        },
-        "type": "multiple"
-    },
-    "volume": {
-        "string": "volume=volume={}",
-        "type": "single"
-    },
-    "reverse": {
-        "string": "areverse",
-        "type": "boolean"
-    },
-    "subboost": {
-        "string": "asubboost=dry={dry}:wet={wet}:decay={decay}:feedback={feedback}:cutoff={cutoff}:slope={slope}:delay={delay}",
-        "type": "multiple",
-        "default_values": {
-            "dry": "0.5",
-            "wet": "0.8",
-            "decay": "0.7",
-            "cutoff": "100",
-            "slope": "0.5",
-            "feedback": "0.5",
-            "delay": "20"
-        }
-    },
-    "pad": {
-        "string": "apad=pad_dur={}",
-        "type": "single"
-    },
-    "trim": {
-        "string": "atrim=start={start}:end={end}",
-        "default_values": {
-            "start": "2",
-            "end": "10",
-        },
-        "type": "multiple"
-    },
-    "pitchtempo": {
-        "string": "rubberband=tempo={tempo}:pitch={pitch}:pitchq=consistency",
-        "default_values": {
-            "tempo": 1,
-            "pitch": 1
-        },
-        "type": "multiple"
-    }
-}
 
 
 class Voice:
@@ -110,15 +52,15 @@ class Voice:
         for f in filter_list:   # Ignore spaces
             f = f.strip(")")
             name = f.split("(")[0]
-            if(name in supported_filters):
+            if(name in FILTERS):
                 params = f.split("(")[1].split(",")
-                if(supported_filters[name]["type"] == "boolean"):
+                if(FILTERS[name]["type"] == "boolean"):
                     filter_string_list.append(
-                        supported_filters[name]["string"])
+                        FILTERS[name]["string"])
                 else:
                     if("=" in f):   # There are named parameters
                         param_dict = copy.deepcopy(
-                            supported_filters[name]["default_values"])
+                            FILTERS[name]["default_values"])
                         for p in params:
                             if("=" in p):
                                 # Multiple parameters for filter specified?
@@ -128,13 +70,13 @@ class Voice:
                                         p.split("=")[0]
                                         ] = p.split("=")[1].strip(")")
                         filter_string_list.append(
-                            supported_filters[name]["string"].format(
+                            FILTERS[name]["string"].format(
                                 **param_dict
                                 ))
                     elif(len(params) > 0):
                         params[0] = params[0].strip(")")
                         filter_string_list.append(
-                            supported_filters[name]["string"].format(
+                            FILTERS[name]["string"].format(
                                 params[0]
                                 ))
         string = ",".join(filter_string_list)
