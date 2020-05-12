@@ -175,6 +175,7 @@ async def addfile(message):
         guild = message.guild.id
         if(len(message.attachments) == 1):
             exists = await clips_db[str(guild)].find_one({"name": {"$eq": name}})
+            print(exists)
             if(exists is not None):  # ERR: If command with name already exists
                 await message.channel.send(
                     f"{utils.config.ERROR_PREFIX}A command with the name `{name}` already exists.")
