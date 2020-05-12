@@ -1,3 +1,5 @@
+import asyncio
+
 class Voice:
     @classmethod
     async def create(cls, guild, channel, client):
