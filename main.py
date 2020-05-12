@@ -47,7 +47,6 @@ class Voice:
             pass
 
     async def parse_params(self, filter_list):
-        print(filter_list)
         filter_string_list = []
         for f in filter_list:   # Ignore spaces
             f = f.strip(")")
@@ -123,7 +122,6 @@ class Voice:
         self.voice_client.play(audio_source)
 
     async def queue(self, metadata, _type, extra_params=None):
-        print(extra_params)
         await self.queues[_type].put(
             {"metadata": metadata, "params": extra_params})
         if(_type == "sound"):
@@ -175,7 +173,6 @@ async def addfile(message):
         guild = message.guild.id
         if(len(message.attachments) == 1):
             exists = await clips_db[str(guild)].find_one({"name": {"$eq": name}})
-            print(exists)
             if(exists is not None):  # ERR: If command with name already exists
                 await message.channel.send(
                     f"{utils.config.ERROR_PREFIX}A command with the name `{name}` already exists.")
@@ -358,7 +355,9 @@ async def youtube(message):
 async def parse_command_queue(message):
     commands = message.content.split(utils.config.SOUND_PREFIX)[2:]
     for command in commands:
-        params = await get_params(command)
+        if(not command[-2:] == "[]"):
+            # If parameters aren't blank, resent and don't copy from previous
+            params = await get_params(command)
         if(params is not None):
             command = command[:command.index("[")]
         if(command == "r"):
