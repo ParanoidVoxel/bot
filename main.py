@@ -17,7 +17,7 @@ voice_state = {}
 
 supported_filters = {
     "tremolo": {
-        "string": "tremolo=d={depth}:f={frequency}",   
+        "string": "tremolo=d={depth}:f={frequency}",
         "default_values": {
             "depth": "0.5",
             "frequency": "5"
@@ -72,8 +72,9 @@ supported_filters = {
             "pitch": 1
         },
         "type": "multiple"
-    } 
+    }
 }
+
 
 class Voice:
     @classmethod
@@ -84,7 +85,7 @@ class Voice:
         self.queues = {"sound": asyncio.Queue(), "yt": asyncio.Queue()}
         self.client = client
         return self
-        
+
     async def move_to(self, channel):
         await self.voice_client.move_to(channel)
 
@@ -100,30 +101,42 @@ class Voice:
         fut = asyncio.run_coroutine_threadsafe(coro, self.client.loop)
         try:
             fut.result()
-        except:
+        except(Exception):
             pass
 
     async def parse_params(self, filter_list):
         print(filter_list)
         filter_string_list = []
-        for f in filter_list: #ignorera mellanslag
+        for f in filter_list:   # Ignore spaces
             f = f.strip(")")
             name = f.split("(")[0]
             if(name in supported_filters):
                 params = f.split("(")[1].split(",")
                 if(supported_filters[name]["type"] == "boolean"):
-                    filter_string_list.append(supported_filters[name]["string"])
+                    filter_string_list.append(
+                        supported_filters[name]["string"])
                 else:
-                    if("=" in f): # There are named parameters
-                        param_dict = copy.deepcopy(supported_filters[name]["default_values"])
+                    if("=" in f):   # There are named parameters
+                        param_dict = copy.deepcopy(
+                            supported_filters[name]["default_values"])
                         for p in params:
-                            if("=" in p): # If there are multiple parameters specified
-                                if(p.split("=")[0] in param_dict): # If these parameters are valid for the filter
-                                    param_dict[p.split("=")[0]] = p.split("=")[1].strip(")") # change them in the dictionary
-                        filter_string_list.append(supported_filters[name]["string"].format(**param_dict))
+                            if("=" in p):
+                                # Multiple parameters for filter specified?
+                                if(p.split("=")[0] in param_dict):
+                                    # Valid Param?
+                                    param_dict[
+                                        p.split("=")[0]
+                                        ] = p.split("=")[1].strip(")")
+                        filter_string_list.append(
+                            supported_filters[name]["string"].format(
+                                **param_dict
+                                ))
                     elif(len(params) > 0):
                         params[0] = params[0].strip(")")
-                        filter_string_list.append(supported_filters[name]["string"].format(params[0]))
+                        filter_string_list.append(
+                            supported_filters[name]["string"].format(
+                                params[0]
+                                ))
         string = ",".join(filter_string_list)
         print("FFMPEG-FILTER-STRING: " + string)
         return string
@@ -133,9 +146,13 @@ class Voice:
             param_string = await self.parse_params(params)
         if(_type == "audio"):
             if(params is not None):
-                audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter_complex '{param_string}'")
+                audio_source = discord.FFmpegPCMAudio(
+                    f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3",
+                    options=f"-filter_complex '{param_string}'")
             else:
-                audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter:a 'volume={str(metadata['settings']['volume'])}'")
+                audio_source = discord.FFmpegPCMAudio(
+                    f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3",
+                    options=f"-filter:a 'volume={str(metadata['settings']['volume'])}'")
         else:
             audio_source = discord.FFmpegPCMAudio(metadata)
         return audio_source
@@ -143,27 +160,30 @@ class Voice:
     async def play_next_video(self, error):
         if not(self.queues["yt"].empty()):
             audio = await self.queues["yt"].get()
-            audio_source = await self.create_audio_source(audio["metadata"], _type="video")
+            audio_source = await self.create_audio_source(
+                audio["metadata"], _type="video")
             self.voice_client.play(audio_source, after=self._after)
 
     async def play_next_sound(self, error):
         if not(self.queues["sound"].empty()):
             audio = await self.queues["sound"].get()
-            audio_source = await self.create_audio_source(audio["metadata"], params=audio["params"])
+            audio_source = await self.create_audio_source(
+                audio["metadata"], params=audio["params"])
             self.voice_client.play(audio_source, after=self._after)
 
     async def play_now(self, metadata, extra_params=None):
         self.queues["sound"] = asyncio.Queue()
         self.queues["yt"] = asyncio.Queue()
-        audio_source = await self.create_audio_source(metadata, params=extra_params)
+        audio_source = await self.create_audio_source(
+            metadata, params=extra_params)
         if(await self.is_playing()):
             self.voice_client.stop()
         self.voice_client.play(audio_source)
 
-
     async def queue(self, metadata, _type, extra_params=None):
         print(extra_params)
-        await self.queues[_type].put({"metadata": metadata, "params": extra_params})
+        await self.queues[_type].put(
+            {"metadata": metadata, "params": extra_params})
         if(_type == "sound"):
             if not(await self.is_playing()):
                 await self.play_next_sound(None)
@@ -179,22 +199,33 @@ class Voice:
             else:
                 await self.play_next_sound(None)
 
+
 clips_db = db_client.clips
 
 discord_client = discord.Client()
 
+
 async def connect_voice(guild_id, voice_channel):
     if not(guild_id in voice_state):
-        voice_state[guild_id] = {"voice_instance": False, "voice_client": False, "channel": False}
+        voice_state[guild_id] = {
+            "voice_instance": False,
+            "voice_client": False,
+            "channel": False
+            }
 
     if not(voice_state[guild_id]["voice_instance"]):
-        voice_state[guild_id]["voice_instance"] = await Voice.create(guild_id, voice_channel, discord_client)
-        voice_state[guild_id]["voice_client"] = await voice_state[guild_id]["voice_instance"].connect()
+        voice_state[guild_id]["voice_instance"] = await Voice.create(
+            guild_id,
+            voice_channel,
+            discord_client)
+        voice_state[guild_id]["voice_client"] = await voice_state[
+                guild_id]["voice_instance"].connect()
         voice_state[guild_id]["channel"] = voice_channel.id
 
     if not(voice_state[guild_id]["channel"] == voice_channel.id):
         await voice_state[guild_id]["voice_instance"].move_to(voice_channel)
     return voice_state[guild_id]["voice_instance"]
+
 
 async def addfile(message):
     if(len(message.content[1:].split()) == 2):
@@ -202,8 +233,9 @@ async def addfile(message):
         guild = message.guild.id
         if(len(message.attachments) == 1):
             exists = await clips_db[str(guild)].find_one({"name": {"$eq": name}})
-            if(exists is not None): # ERR: If command with name already exists
-                await message.channel.send(f"{utils.config.ERROR_PREFIX}A command with the name `{name}` already exists.")
+            if(exists is not None):  # ERR: If command with name already exists
+                await message.channel.send(
+                    f"{utils.config.ERROR_PREFIX}A command with the name `{name}` already exists.")
             elif(message.attachments[0].url.split(".")[-1] == "mp3"):
                 document = {
                     "url": message.attachments[0].url,
@@ -222,45 +254,66 @@ async def addfile(message):
                 with open(f"{utils.config.SOUND_PATH}/{new.inserted_id}.mp3", "wb+") as f:
                     f.write(requests.get(document["url"]).content)
                 await message.channel.send(f"File added with name `{name}`.")
-            else: # ERR: If not mp3 file
-                await message.channel.send(f"{utils.config.ERROR_PREFIX}Only attachments of type `mp3` is permitted.")
-        elif(len(message.attachments) > 1): # ERR: If too many attachments
-            await message.channel.send(f"{utils.config.ERROR_PREFIX}Only one attachment per `addfile` command is permitted.")
-        else: # ERR: If no attachments
-            await message.channel.send(f"{utils.config.ERROR_PREFIX}Please attach a file to add a command.")
-    else: # ERR: If not two args
-        await message.channel.send(f"{utils.config.ERROR_PREFIX}Please specify a name for the clip. `{utils.config.COMMAND_PREFIX}addfile <name>`.")
+            else:
+                # ERR: If not mp3 file
+                await message.channel.send(
+                    f"{utils.config.ERROR_PREFIX}Only attachments of type `mp3` is permitted.")
+        elif(len(message.attachments) > 1):
+            # ERR: If too many attachments
+            await message.channel.send(
+                f"{utils.config.ERROR_PREFIX}Only one attachment per `addfile` command is permitted.")
+        else:
+            # ERR: If no attachments
+            await message.channel.send(
+                f"{utils.config.ERROR_PREFIX}Please attach a file to add a command.")
+    else:
+        # ERR: If not two args
+        await message.channel.send(
+            f"{utils.config.ERROR_PREFIX}Please specify a name for the clip. `{utils.config.COMMAND_PREFIX}addfile <name>`.")
 
 
 async def play_sound(metadata, channel, mode="instant", extra_params=None):
     voice_client = await connect_voice(str(channel.guild.id), channel)
-    #audio_source = discord.FFmpegPCMAudio(f"{utils.config.SOUND_PATH}/{metadata['_id']}.mp3", options=f"-filter:a 'volume={str(metadata['settings']['volume'])}'")
     if(mode == "queue"):
         await voice_client.queue(metadata, "sound", extra_params=extra_params)
     else:
         await voice_client.play_now(metadata, extra_params=extra_params)
 
-async def get_sound(message):
-    params = None
-    command_name = message.content[1:]
-    if("[" in message.content and "]" in message.content):
-        command_name = message.content[1:message.content.index("[")]
-        params = None
+
+async def get_params(string):
+    if("[" in string and "]" in string):
         try:
-            params = message.content.replace(" ", "")[message.content.index("[")+1:message.content.index("]")].strip(")]").split("),")
+            return string.replace(" ", "")[
+                string.index("[")+1:
+                string.index("]")
+                ].strip(")]").split("),")
         except Exception:
             raise
-    
-    sound_metadata = await clips_db[str(message.guild.id)].find_one({"name": {"$eq": command_name}})
+    return None
+
+
+async def get_sound(message):
+    params = await get_params(message.content)
+    if(params is None):
+        command_name = message.content[1:]
+    else:
+        command_name = message.content[1:message.content.index("[")]
+    sound_metadata = await clips_db[str(message.guild.id)].find_one(
+        {"name": {"$eq": command_name}})
 
     if(sound_metadata is None or message.author.voice.channel is None):
         return
     else:
         if(params is not None):
-            await play_sound(sound_metadata, message.author.voice.channel, extra_params=params)
+            await play_sound(sound_metadata,
+                             message.author.voice.channel,
+                             extra_params=params)
         else:
             await play_sound(sound_metadata, message.author.voice.channel)
-        await clips_db[str(message.guild.id)].update_one({"_id": sound_metadata["_id"]}, {"$inc": {'stats.count':1}})
+        await clips_db[str(message.guild.id)].update_one(
+                {"_id": sound_metadata["_id"]},
+                {"$inc": {'stats.count': 1}})
+
 
 async def is_valid_volume(string):
     try:
@@ -269,39 +322,63 @@ async def is_valid_volume(string):
     except ValueError:
         return False
 
+
 async def setvolume(message):
     args = message.content[1:].split()
     if(len(args) == 3):
-        metadata = await clips_db[str(message.guild.id)].find_one({"name": {"$eq": args[1]}})
+        metadata = await clips_db[str(message.guild.id)].find_one(
+            {"name": {"$eq": args[1]}})
         valid = await is_valid_volume(args[2])
-        if(metadata is None): # ERR: If the command doesn't exist
-            await message.channel.send(f"{utils.config.ERROR_PREFIX}The clip `{args[1]}` doesn't exist")
+        if(metadata is None):
+            # ERR: The command doesn't exist
+            await message.channel.send(
+                f"{utils.config.ERROR_PREFIX}The clip `{args[1]}` doesn't exist")
         elif not(valid):
-            await message.channel.send(f"{utils.config.ERROR_PREFIX}`{args[2]}` is not a number.")
+            await message.channel.send(
+                f"{utils.config.ERROR_PREFIX}`{args[2]}` is not a number.")
         else:
-            await clips_db[str(message.guild.id)].update_one({"_id": metadata["_id"]}, {"$set": {'settings': {"last_changed_by": str(message.author.id), "volume": args[2]}}})
+            await clips_db[str(message.guild.id)].update_one(
+                {"_id": metadata["_id"]},
+                {
+                    "$set": {
+                        'settings': {
+                            "last_changed_by": str(message.author.id),
+                            "volume": args[2]
+                            }
+                    }
+                })
             await message.channel.send(f"Volume of {args[1]} is now `{args[2]}`")
-    else: # ERR: if there aren't enough/too many args
-        await message.channel.send(f"{utils.config.ERROR_PREFIX}Please provide two arguments. `{utils.config.COMMAND_PREFIX}addfile <clip name> <volume>`.")
+    else:
+        # ERR: There aren't enough/too many args
+        await message.channel.send(
+            f"{utils.config.ERROR_PREFIX}Please provide two arguments. `{utils.config.COMMAND_PREFIX}addfile <clip name> <volume>`.")
+
+
+async def get_random(guild_id, count=1):
+    for doc in clips_db[str(guild_id)].aggregate([{"$sample": {"size": 1}}]):
+        return doc
+
 
 async def play_random(message):
-    params = None
-    if("[" in message.content and "]" in message.content):
-            try:
-                params = message.content.replace(" ", "")[message.content.index("[")+1:message.content.index("]")].strip(")]").split("),")
-            except Exception:
-                raise
+    params = await get_params(message.content)
     if(message.author.voice.channel is None):
         return
-    async for doc in clips_db[str(message.guild.id)].aggregate([{"$sample": {"size": 1}}]):
-        await play_sound(doc, message.author.voice.channel, extra_params=params)
+    random_selection = await get_random(message.guild.id)
+    await play_sound(random_selection,
+                     message.author.voice.channel,
+                     extra_params=params)
 
 
 async def _list(message):
     await message.channel.send(f"Command list: https://bot.thvxl.pw/ui/guild/{str(message.guild.id)}")
 
+
 async def youtube(message):
-    ydl_opts = {"extractaudio": True, "audioquality": 9, "audioformat": "bestaudio/best"}
+    ydl_opts = {
+        "extractaudio": True,
+        "audioquality": 9,
+        "audioformat": "bestaudio/best"
+        }
     args = message.content.split()
     if(args[1].startswith("http")):
         video = args[1]
@@ -317,42 +394,46 @@ async def youtube(message):
             url = info_dict['entries'][0]['formats'][0]['url']
             thumbnail = info_dict['entries'][0]['thumbnail']
             title = info_dict['entries'][0]['title']
-        voice_client = await connect_voice(str(message.guild.id), message.author.voice.channel)
+        voice_client = await connect_voice(str(message.guild.id),
+                                           message.author.voice.channel)
         await voice_client.queue(url, "yt")
-
-        embed = discord.Embed(title="YouTube", colour=discord.Colour(0xa22b8c), description=f"Currently playing in channel `#{message.channel.name}`", timestamp=datetime.datetime.utcfromtimestamp(time.time()))
-
+        embed = discord.Embed(title="YouTube",
+                              colour=discord.Colour(0xa22b8c),
+                              description=f"Currently playing in channel `#{message.channel.name}`",
+                              timestamp=datetime.datetime.utcfromtimestamp(time.time()))
         embed.set_image(url=thumbnail)
         embed.set_thumbnail(url=discord_client.user.avatar_url)
-        embed.set_author(name="RadonBot", url="https://discordapp.com", icon_url=discord_client.user.avatar_url)
-        embed.set_footer(text="RadonBot", icon_url=discord_client.user.avatar_url)
+        embed.set_author(name="RadonBot",
+                         url="https://discordapp.com",
+                         icon_url=discord_client.user.avatar_url)
+        embed.set_footer(text="RadonBot",
+                         icon_url=discord_client.user.avatar_url)
         embed.add_field(name="Title", value=title)
         await message.channel.send(content="Now Playing", embed=embed)
-    
+
+
 async def parse_command_queue(message):
     commands = message.content.split(utils.config.SOUND_PREFIX)[2:]
-    params = None
     for command in commands:
-        if("[" in command and "]" in command):
-            try:
-                params = command.replace(" ", "")[command.index("[")+1:command.index("]")].strip(")]").split("),")
-                command = command.split("[")[0]
-            except Exception:
-                raise
+        params = await get_params(command)
+        if(params is not None):
+            command = command[:command.index("[")]
         if(command == "r"):
-            async for doc in clips_db[str(message.guild.id)].aggregate([{"$sample": {"size": 1}}]):
-                sound_metadata = doc
+            sound_metadata = await get_random(message.guild.id)
         else:
             sound_metadata = await clips_db[str(message.guild.id)].find_one({"name": {"$eq": command}})
         if(sound_metadata is None or message.author.voice.channel is None):
             pass
         else:
-            print(command)
             await play_sound(sound_metadata, message.author.voice.channel, "queue", extra_params=params)
-            await clips_db[str(message.guild.id)].update_one({"_id": sound_metadata["_id"]}, {"$inc": {'stats.count':1}})
+            await clips_db[str(message.guild.id)].update_one(
+                {"_id": sound_metadata["_id"]}, {"$inc": {'stats.count': 1}})
+
 
 async def skip(message):
-    voice_client = await connect_voice(str(message.guild.id), message.author.voice.channel)
+    voice_client = await connect_voice(
+        str(message.guild.id),
+        message.author.voice.channel)
     await voice_client.skip()
 
 
@@ -364,18 +445,30 @@ commands = {
     "skip": skip,
 }
 
+
+async def should_parse_message():
+    try:
+        if(discord_client.user.voice.mute):
+            return False
+        else:
+            return True
+    except(Exception):
+        return False
+
+
 async def parse_message(message):
-    if(message.author == discord_client.user):
+    if(await should_parse_message()):
+        if(message.author == discord_client.user):
             return
-    elif(message.content == f"{utils.config.SOUND_PREFIX}r"):
-        await play_random(message)
-    elif(message.content.startswith(utils.config.SOUND_PREFIX*2)):
-        await parse_command_queue(message)
-    elif(message.content.startswith(utils.config.SOUND_PREFIX)):
-        await get_sound(message)
-    elif(message.content.startswith(utils.config.COMMAND_PREFIX)):
-        if(message.content[1:].split()[0] in commands):
-            await commands[message.content[1:].split()[0]](message)
+        elif(message.content == f"{utils.config.SOUND_PREFIX}r"):
+            await play_random(message)
+        elif(message.content.startswith(utils.config.SOUND_PREFIX*2)):
+            await parse_command_queue(message)
+        elif(message.content.startswith(utils.config.SOUND_PREFIX)):
+            await get_sound(message)
+        elif(message.content.startswith(utils.config.COMMAND_PREFIX)):
+            if(message.content[1:].split()[0] in commands):
+                await commands[message.content[1:].split()[0]](message)
 
 @discord_client.event
 async def on_ready():
@@ -385,6 +478,7 @@ async def on_ready():
 @discord_client.event
 async def on_message(message):
     await parse_message(message)
+
 
 @discord_client.event
 async def on_message_edit(before, after):
