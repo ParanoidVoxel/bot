@@ -453,7 +453,7 @@ async def should_parse_message():
         else:
             return True
     except(Exception):
-        return False
+        return True
 
 
 async def parse_message(message):
