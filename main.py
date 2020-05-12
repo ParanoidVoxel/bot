@@ -83,7 +83,7 @@ async def connect_voice(guild_id, voice_channel):
 
 async def addfile(message):
     if(len(message.content[1:].split()) == 2):
-        uploader_id = get_uploader(message.member)
+        uploader_id = get_uploader(message.author)
         name = message.content[1:].split()[1]
         guild = message.guild.id
         if(len(message.attachments) == 1):
@@ -192,12 +192,13 @@ async def setvolume(message):
             await message.channel.send(
                 f"{utils.config.ERROR_PREFIX}`{args[2]}` is not a number.")
         else:
+            uploder_id = await get_uploader(message.author)
             await clips_db[str(message.guild.id)].update_one(
                 {"_id": metadata["_id"]},
                 {
                     "$set": {
                         'settings': {
-                            "last_changed_by": str(message.author.id),
+                            "last_changed_by": uploder_id,
                             "volume": args[2]
                             }
                     }
