@@ -10,7 +10,6 @@ from youtube_dl import YoutubeDL
 import requests
 import time
 
-from utils.filters import FILTERS
 from modules.voice import Voice
 
 import utils.config

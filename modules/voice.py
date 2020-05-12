@@ -1,6 +1,9 @@
 import asyncio
 import discord
 
+from utils.filters import FILTERS
+import utils.config
+
 class Voice:
     @classmethod
     async def create(cls, guild, channel, client):
